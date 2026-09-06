@@ -44,12 +44,22 @@ Point at the **Bank feed (Plaid)** card reading *Not connected*.
 > We didn't stub a fake bank feed. Cash position is derived from the ledger, and
 > the card says so.
 
-**Optional (~10s), if the run is going well:** drag an Excel workbook onto the
-drop zone.
+**Optional (~15s), if the run is going well:** drag `public/sample-workbook.xlsx`
+onto the drop zone — it's also linked as *Download a sample workbook* under the
+drop zone, so judges can repeat this themselves.
 
-> An upload isn't a preview — it becomes the dataset. Excel workbooks are read
-> directly, no conversion step. The banner switches to your file, and every run
-> and every provenance lookup now reads it. Disconnect puts the demo ledger back.
+> An upload isn't a preview — it becomes the dataset. This is one Excel file
+> with four tabs: ledger, vendor contracts, company profile, and a cover sheet.
+> Each tab is classified on its own contents; the cover sheet is skipped and
+> named, not silently dropped. No conversion step, and no spreadsheet library.
+
+The banner reports *Brightpath Nutrition*, 318 ledger rows, 10 contracts.
+Re-run to show it is a genuinely different company: **CCC 76.4 days, $1.63M
+released**, led by *Grandview Grocers pays 90.1 days against 45-day terms*.
+
+> Every figure here is reported, not inferred — the workbook carried a company
+> tab. Drop the ledger on its own and revenue and COGS get inferred instead, and
+> the UI labels them "Inferred, not reported".
 
 Disconnect before continuing so the figures below hold.
 
