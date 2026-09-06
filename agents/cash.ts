@@ -283,7 +283,7 @@ function apExtensionLevers(
       confidence: confidenceFor(b.invoiceCount, 1),
       evidence: [
         ref('ledger', b.rowIds, `${b.invoiceCount} payments to ${b.counterparty}`, sourceIdOf(rows, 'ledger')),
-        ref('contract', peerRows, `${category} category peer payment history`, sourceIdOf(contracts, 'contract')),
+        ref('ledger', peerRows, `${category} category peer payment history`, sourceIdOf(rows, 'ledger')),
       ],
     })
 
