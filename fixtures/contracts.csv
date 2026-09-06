@@ -1,0 +1,26 @@
+id,vendor,annualValueUsd,renewalDate,category,cancellable,noticeDays,utilizationPct,sourceId
+CT-001,"Lumen Analytics",96000,2026-11-02,"Software",true,14,12,contracts
+CT-002,"Kestrel Freight",1212000,2027-04-12,"Logistics",false,90,94,contracts
+CT-003,"Halden Transport",756000,2027-05-26,"Logistics",false,90,88,contracts
+CT-004,"Verity Carriers",612000,2027-01-10,"Logistics",true,60,91,contracts
+CT-005,"Tallow Bay Shipping",456000,2027-08-03,"Logistics",true,60,76,contracts
+CT-006,"Prairie Steel Supply",1152000,2027-02-28,"Raw Materials",false,90,97,contracts
+CT-007,"Corvid Alloys",936000,2027-05-03,"Raw Materials",false,90,93,contracts
+CT-008,"Dunmore Castings",648000,2026-12-07,"Raw Materials",true,45,84,contracts
+CT-009,"Whitlock Components",564000,2027-03-29,"Components",false,60,90,contracts
+CT-010,"Ferris Electronics",492000,2027-06-14,"Components",true,45,87,contracts
+CT-011,"Sandoval Bearings",348000,2027-02-01,"Components",true,45,79,contracts
+CT-012,"Grantham Facilities",288000,2026-12-28,"Facilities",true,60,95,contracts
+CT-013,"Bluepeak Energy",252000,2027-06-30,"Facilities",false,90,99,contracts
+CT-014,"Ormsby Maintenance",192000,2027-02-24,"Facilities",true,30,71,contracts
+CT-015,"Cindermill Cloud",138000,2027-03-11,"Software",true,30,82,contracts
+CT-016,"Trellis HR Systems",76800,2027-05-18,"Software",true,30,68,contracts
+CT-017,"Radley Legal",117600,2027-02-15,"Professional Services",true,30,74,contracts
+CT-018,"Pinehurst Audit",91200,2027-07-24,"Professional Services",false,60,100,contracts
+CT-019,"Kavanagh Consulting",70800,2026-12-03,"Professional Services",true,30,55,contracts
+CT-020,"Stonepath Insurance",158400,2027-04-22,"Insurance",false,60,100,contracts
+CT-021,"Merrick Safety",57600,2027-06-06,"Insurance",true,30,88,contracts
+CT-022,"Aldergate Packaging",220800,2027-01-22,"Packaging",true,45,92,contracts
+CT-023,"Cobblestone Print",46800,2027-07-09,"Packaging",true,30,63,contracts
+CT-024,"Hargrave Tooling",152400,2027-03-22,"Equipment",true,45,81,contracts
+CT-025,"Wren Calibration",62400,2027-08-14,"Equipment",true,30,77,contracts
