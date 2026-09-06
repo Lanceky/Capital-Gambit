@@ -191,7 +191,7 @@ function buildTradeOff(
     `Tighter collection terms with named customers and slower settlement with suppliers paid ahead of ` +
     `schedule, plus ${formatUsd(deployed)} of cash committed out of discretionary reserve this cycle.`
   const get =
-    `${formatUsd(freed)} of working capital released from the cash conversion cycle and redeployed into ` +
+    `${formatUsd(freed)} of working capital released from the cash conversion cycle and redeployed to ` +
     `${primary ? primary.label.toLowerCase() : 'the highest-scoring use'}, at an expected ` +
     `${primary ? primary.expectedReturnPct : company.costOfCapitalPct}% next-cycle return.`
   return { give, get }
@@ -326,7 +326,7 @@ export function synthesize(runs: AgentRun[], company: CompanyProfile): Synthesis
   const recommendation: Recommendation = {
     id: `rec-${Date.now()}`,
     headline:
-      `Release ${formatUsd(freed)} from the cash conversion cycle and redeploy into ` +
+      `Release ${formatUsd(freed)} from the cash conversion cycle and redeploy to ` +
       `${primary ? primary.label.toLowerCase() : 'the highest-scoring use'} for ` +
       `${formatUsd(expectedPayoffUsd)} of next-cycle payoff`,
     tradeOff,
