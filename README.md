@@ -20,10 +20,67 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000) and click **Run analysis**. The
+app ships with a fixture dataset, so it works with no configuration, no API keys
+and no external services.
 
 ## Build
 
 ```bash
 npm run build
 ```
+
+## What actually runs
+
+The demo dataset is Meridian Instruments, a $11.45M industrial distributor:
+624 ledger rows and 25 vendor contracts. A full run completes in roughly 300ms
+and produces:
+
+| | |
+|---|---|
+| Days sales outstanding | 39.4 |
+| Days payable outstanding | 31.0 |
+| Cash conversion cycle | 8.3 days |
+| Redeployable capital identified | $603,470 |
+
+The **cash agent** computes DSO/DPO/DIO/CCC and AR aging, then derives four
+families of lever: receivables running past agreed terms, suppliers being paid
+faster than their category peers, early-payment discounts worth less than the
+cost of capital, and contract renewals still inside their notice window. The
+peer benchmark is the median of same-category vendors *in your ledger* — it is
+computed, not hardcoded.
+
+The **synthesis agent** scores redeployment options on return, risk and
+reversibility weighted 60/20/20, then allocates the freed capital across them by
+drawing down each lever, so the moves always sum to exactly the capital
+identified and no move can cite more than its lever released.
+
+Every finding, lever and reasoning step carries `SourceRef` row ids. Clicking any
+figure opens the actual ledger and contract rows behind it.
+
+## Human approval
+
+Nothing executes. The recommendation is a proposal: amounts are editable, the
+destination is a dropdown, and any move can be dropped. Approving as modified
+records the correction against the original proposal and shows the resulting
+position — capital committed, capital left uncommitted, and the delta versus what
+was recommended.
+
+## Honest scope
+
+- **Cash and synthesis agents are live.** Cost and revenue report `skipped` /
+  `not live`, and synthesis states its own coverage gap in step 1 of its
+  reasoning rather than presenting partial analysis as complete.
+- **No bank feed.** The connections page reads "Not connected" for Plaid; cash
+  position is derived from the ledger.
+- **Concurrency is genuine but not visually observable.** Agents are pure
+  deterministic computation and finish in well under a millisecond, so there is
+  no window in which to watch panels resolve one by one. No artificial delays
+  were added to manufacture one.
+
+## Demo
+
+`DEMO.md` contains the timed three-minute script, the click path, and the
+verified figures it depends on. The fixture generator is seeded, so a fresh run
+reproduces those numbers exactly — regenerating fixtures means updating both
+`DEMO.md` and `fixtures/README.md`.
