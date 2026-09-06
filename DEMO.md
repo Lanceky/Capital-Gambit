@@ -44,11 +44,12 @@ Point at the **Bank feed (Plaid)** card reading *Not connected*.
 > We didn't stub a fake bank feed. Cash position is derived from the ledger, and
 > the card says so.
 
-**Optional (~10s), if the run is going well:** drag a CSV onto the drop zone.
+**Optional (~10s), if the run is going well:** drag an Excel workbook onto the
+drop zone.
 
-> An upload isn't a preview — it becomes the dataset. The banner switches to
-> your file, and every run and every provenance lookup now reads it. Disconnect
-> puts the demo ledger back.
+> An upload isn't a preview — it becomes the dataset. Excel workbooks are read
+> directly, no conversion step. The banner switches to your file, and every run
+> and every provenance lookup now reads it. Disconnect puts the demo ledger back.
 
 Disconnect before continuing so the figures below hold.
 

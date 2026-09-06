@@ -43,11 +43,11 @@ function sourceCards(active: ActiveDataset | null): SourceCard[] {
   return [
     {
       id: 'spreadsheet',
-      label: 'Spreadsheet / CSV export',
+      label: 'Spreadsheet (Excel or CSV)',
       detail: uploaded
         ? `Active. Analysis runs read ${active.summary.ledgerRows} ledger rows and ` +
           `${active.summary.contractRows} contracts from your upload.`
-        : 'Upload a ledger or contract export below to analyze your own data instead of the demo ledger.',
+        : 'Upload an .xlsx workbook or CSV export below to analyze your own data instead of the demo ledger.',
       status: uploaded ? 'live' : 'unavailable',
     },
     {
@@ -294,18 +294,18 @@ export default function ConnectionsPage() {
             }`}
           >
             <p className="text-xs font-medium text-slate-800">
-              {busy ? 'Validating…' : 'Drop a CSV here, or click to choose a file'}
+              {busy ? 'Validating…' : 'Drop a spreadsheet here, or click to choose a file'}
             </p>
             <p className="mx-auto mt-1 max-w-md text-[11px] leading-relaxed text-slate-500">
-              A ledger export needs kind, counterparty and amountUsd columns. A contract export
-              needs vendor and annualValueUsd. A company profile can be supplied as JSON. The type
-              is detected from the contents, and an accepted file immediately becomes the dataset
-              every subsequent analysis run reads from.
+              Excel (.xlsx) or CSV. A ledger export needs kind, counterparty and amountUsd
+              columns; a contract export needs vendor and annualValueUsd; a company profile can be
+              supplied as JSON. The type is detected from the contents, and an accepted file
+              immediately becomes the dataset every subsequent analysis run reads from.
             </p>
             <input
               ref={inputRef}
               type="file"
-              accept=".csv,text/csv,.json,application/json"
+              accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.json,application/json"
               multiple
               className="hidden"
               onChange={(e) => void upload(e.target.files)}

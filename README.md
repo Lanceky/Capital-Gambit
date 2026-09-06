@@ -60,7 +60,7 @@ figure opens the actual ledger and contract rows behind it.
 
 ## Connecting your own spreadsheet
 
-Drop a CSV on the **Connections** page. An accepted file becomes the active
+Drop an Excel workbook (`.xlsx`) or a CSV on the **Connections** page. An accepted file becomes the active
 dataset immediately — every subsequent analysis run and every provenance
 drill-down reads it instead of the bundled fixtures, and the header shows which
 dataset is in use.
@@ -75,6 +75,13 @@ dataset is in use.
 
 Column naming is tolerant of common spellings, and validation failures name the
 offending row and column. **Disconnect** reverts to the demo ledger.
+
+`.xlsx` is read by a small dependency-free reader in `lib/xlsx.ts` — a workbook
+is a ZIP of XML, and Node ships `zlib`. It decodes the first worksheet, resolves
+shared strings, and converts Excel serial dates to ISO. This avoids the npm
+build of `xlsx`, which carries unpatched prototype-pollution and ReDoS
+advisories. Anything the reader cannot handle is reported with a "re-export as
+CSV" message rather than misparsed.
 
 ## Human approval
 

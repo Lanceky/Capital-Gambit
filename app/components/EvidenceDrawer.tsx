@@ -90,6 +90,16 @@ export default function EvidenceDrawer({ title, evidence, onClose }: Props) {
           {error && <p className="mt-4 text-sm text-rose-600">{error}</p>}
           {!resolved && !error && <p className="mt-4 text-sm text-slate-500">Loading source rows…</p>}
 
+          {resolved &&
+            resolved.requested !== undefined &&
+            resolved.returned !== undefined &&
+            resolved.returned < resolved.requested && (
+              <p className="mt-4 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-[11px] text-amber-900">
+                Showing {resolved.returned} of {resolved.requested} cited rows. The rest are omitted
+                for display only — every one of them was included in the calculation.
+              </p>
+            )}
+
           {resolved && resolved.ledger.length > 0 && (
             <table className="mt-4 w-full border-collapse text-xs tabular-nums">
               <thead>

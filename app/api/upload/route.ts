@@ -13,9 +13,36 @@ import {
   writeStoredDataset,
   type UploadedFile,
 } from '@/lib/activeDataset'
+import { isXlsx, parseXlsx, sheetNames, XlsxError } from '@/lib/xlsx'
 import type { CompanyProfile, LedgerEntry, VendorContract } from '@/lib/types'
 
+/**
+ * Read an upload as a grid of cells. Excel workbooks are decoded from their
+ * first worksheet; everything else is treated as delimited text.
+ */
+async function readGrid(
+  file: File,
+): Promise<{ rows: string[][]; text: string; sheet?: string; format: 'xlsx' | 'csv' }> {
+  const buf = Buffer.from(await file.arrayBuffer())
+  if (isXlsx(buf)) {
+    const rows = parseXlsx(buf)
+    // Re-emit as CSV so the existing row parsers stay the single source of
+    // truth for column mapping and validation.
+    const text = rows
+      .map((r) => r.map((c) => (/[",\n]/.test(c) ? `"${c.replace(/"/g, '""')}"` : c)).join(','))
+      .join('\n')
+    return { rows, text, sheet: sheetNames(buf)[0], format: 'xlsx' }
+  }
+  const text = buf.toString('utf-8')
+  return { rows: parseCsv(text), text, format: 'csv' }
+}
+
 export const dynamic = 'force-dynamic'
+
+/** Show which worksheet a workbook's rows came from. */
+function label(file: File, grid: { sheet?: string; format: 'xlsx' | 'csv' }): string {
+  return grid.format === 'xlsx' && grid.sheet ? `${file.name} — sheet "${grid.sheet}"` : file.name
+}
 
 /**
  * POST /api/upload — connect a spreadsheet.
@@ -57,10 +84,25 @@ export async function POST(request: Request) {
   }
 
   for (const file of files) {
-    const text = await file.text()
+    let grid: Awaited<ReturnType<typeof readGrid>>
+    try {
+      grid = await readGrid(file)
+    } catch (err) {
+      if (err instanceof XlsxError) {
+        return NextResponse.json(
+          {
+            error: `${file.name} could not be read as a spreadsheet: ${err.message}. Re-export the sheet as CSV and try again.`,
+            file: file.name,
+          },
+          { status: 422 },
+        )
+      }
+      throw err
+    }
+    const { text, rows } = grid
     const trimmed = text.trim()
 
-    if (trimmed.startsWith('{')) {
+    if (grid.format === 'csv' && trimmed.startsWith('{')) {
       let raw: unknown
       try {
         raw = JSON.parse(trimmed)
@@ -77,7 +119,6 @@ export async function POST(request: Request) {
       continue
     }
 
-    const rows = parseCsv(text)
     if (rows.length === 0) {
       return NextResponse.json({ error: `${file.name} is empty`, file: file.name }, { status: 400 })
     }
@@ -101,12 +142,12 @@ export async function POST(request: Request) {
         const parsed = parseLedgerCsv(text, `upload-${file.name}`)
         ledger = parsed
         replaceKind('ledger')
-        accepted.push({ name: file.name, kind, rows: parsed.length })
+        accepted.push({ name: label(file, grid), kind, rows: parsed.length })
       } else {
         const parsed = parseContractsCsv(text, `upload-${file.name}`)
         contracts = parsed
         replaceKind('contracts')
-        accepted.push({ name: file.name, kind, rows: parsed.length })
+        accepted.push({ name: label(file, grid), kind, rows: parsed.length })
       }
     } catch (err) {
       if (err instanceof CsvValidationError) {
