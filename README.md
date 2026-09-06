@@ -69,15 +69,23 @@ dataset is in use.
   `date`, `dueDate`, `paidDate` and `termsDays` where available.
 - **Contract export** (optional): `vendor`, `annualValueUsd`, renewal and notice
   dates. Without it, renewal levers cannot be identified and the UI says so.
-- **Company profile** (optional, JSON): revenue, COGS, cash balance and cost of
-  capital. Without it these are inferred from ledger activity, and the inferred
-  fields are labelled as such rather than presented as reported figures.
+- **Company profile** (optional): revenue, COGS, cash balance and cost of
+  capital, either as JSON or as a worksheet with those column headings and a
+  single row of values. Without it these are inferred from ledger activity, and
+  the inferred fields are labelled as such rather than presented as reported
+  figures.
+
+These can arrive as separate files or as tabs of one workbook — each worksheet
+is classified on its own contents. Tabs that match nothing (cover sheets,
+working notes) are skipped and named in the upload result rather than failing
+the file. `public/sample-workbook.xlsx` is a three-tab example, downloadable
+from the Connections page.
 
 Column naming is tolerant of common spellings, and validation failures name the
 offending row and column. **Disconnect** reverts to the demo ledger.
 
 `.xlsx` is read by a small dependency-free reader in `lib/xlsx.ts` — a workbook
-is a ZIP of XML, and Node ships `zlib`. It decodes the first worksheet, resolves
+is a ZIP of XML, and Node ships `zlib`. It decodes every worksheet, resolves
 shared strings, and converts Excel serial dates to ISO. This avoids the npm
 build of `xlsx`, which carries unpatched prototype-pollution and ReDoS
 advisories. Anything the reader cannot handle is reported with a "re-export as

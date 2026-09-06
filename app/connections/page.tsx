@@ -100,6 +100,7 @@ export default function ConnectionsPage() {
   const [dragging, setDragging] = useState(false)
   const [summary, setSummary] = useState<UploadSummary | null>(null)
   const [accepted, setAccepted] = useState<{ name: string; kind: string; rows: number }[]>([])
+  const [ignored, setIgnored] = useState<{ name: string; reason: string }[]>([])
   const [rowErrors, setRowErrors] = useState<RowError[]>([])
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -159,6 +160,7 @@ export default function ConnectionsPage() {
       }
       setSummary(body.summary)
       setAccepted(body.accepted ?? [])
+      setIgnored(body.ignored ?? [])
       await refreshActive()
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
@@ -332,7 +334,20 @@ export default function ConnectionsPage() {
               Excel (.xlsx) or CSV. A ledger export needs kind, counterparty and amountUsd
               columns; a contract export needs vendor and annualValueUsd; a company profile can be
               supplied as JSON. The type is detected from the contents, and an accepted file
-              immediately becomes the dataset every subsequent analysis run reads from.
+              immediately becomes the dataset every subsequent analysis run reads from. A workbook
+              may hold each of these on its own tab.
+            </p>
+            <p className="mt-2 text-[11px] text-slate-500">
+              No data to hand?{' '}
+              <a
+                href="/sample-workbook.xlsx"
+                download
+                onClick={(e) => e.stopPropagation()}
+                className="font-medium text-slate-800 underline underline-offset-2 hover:text-slate-950"
+              >
+                Download a sample workbook
+              </a>{' '}
+              — a three-tab Excel file for a fictional company.
             </p>
             <input
               ref={inputRef}
@@ -381,6 +396,11 @@ export default function ConnectionsPage() {
                 Connected {accepted.map((a) => `${a.name} (${a.kind}, ${a.rows} rows)`).join(', ')}.
               Analysis runs now use this data.
               </p>
+              {ignored.length > 0 && (
+                <p className="mt-1 text-[11px] text-emerald-800">
+                  Skipped {ignored.map((i) => `${i.name} — ${i.reason}`).join('; ')}.
+                </p>
+              )}
               <dl className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <Stat label="Ledger rows" value={summary.ledgerRows} />
                 <Stat label="AR / AP" value={`${summary.arRows} / ${summary.apRows}`} />

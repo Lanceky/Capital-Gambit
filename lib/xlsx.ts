@@ -194,7 +194,15 @@ export function isXlsx(buf: Buffer): boolean {
  * Extract the first worksheet of an .xlsx workbook as a grid of cell text,
  * matching the shape the CSV parser produces.
  */
-export function parseXlsx(buf: Buffer): string[][] {
+/**
+ * Read every worksheet in a workbook, paired with its tab name.
+ *
+ * Real finance workbooks arrive as one file with a tab per export, so each
+ * sheet is returned separately and left for the caller to classify. Empty
+ * sheets are dropped rather than reported as errors: a trailing blank tab is
+ * normal in hand-maintained workbooks and is not something a user can act on.
+ */
+export function parseWorkbook(buf: Buffer): Array<{ name: string; rows: string[][] }> {
   if (!isXlsx(buf)) throw new XlsxError('File is not an .xlsx workbook')
 
   const entries = readZip(
@@ -218,10 +226,22 @@ export function parseXlsx(buf: Buffer): string[][] {
 
   const shared = parseSharedStrings(get('xl/sharedStrings.xml') ?? '')
   const dateStyles = dateStyleIds(get('xl/styles.xml'))
-  const rows = parseSheet(sheets[0].data.toString('utf-8'), shared, dateStyles)
+  const names = sheetNames(buf)
 
-  if (rows.length === 0) throw new XlsxError('The first worksheet is empty')
-  return rows
+  const out: Array<{ name: string; rows: string[][] }> = []
+  sheets.forEach((sheet, i) => {
+    const rows = parseSheet(sheet.data.toString('utf-8'), shared, dateStyles)
+    if (rows.length > 0) out.push({ name: names[i] ?? `Sheet${i + 1}`, rows })
+  })
+
+  if (out.length === 0) throw new XlsxError('Workbook contains no data')
+  return out
+}
+
+export function parseXlsx(buf: Buffer): string[][] {
+  const [first] = parseWorkbook(buf)
+  if (!first) throw new XlsxError('The first worksheet is empty')
+  return first.rows
 }
 
 /** Names of every worksheet, for telling the user which one we read. */
