@@ -118,6 +118,24 @@ interface RunRecord {
   decision?: Decision
 }
 
+interface CompanyProfile {
+  name: string
+  annualRevenueUsd: Money
+  annualCogsUsd: Money
+  annualOpexUsd: Money
+  cashBalanceUsd: Money
+  // Whole percent, e.g. 9 means a 9% annual cost of capital.
+  costOfCapitalPct: number
+  inventoryUsd?: Money
+  fiscalYearEnd?: ISO
+}
+
+interface AgentDataset {
+  ledger: LedgerEntry[]
+  contracts: VendorContract[]
+  company: CompanyProfile
+}
+
 export type {
   ISO,
   Money,
@@ -136,4 +154,6 @@ export type {
   AgentRun,
   Decision,
   RunRecord,
+  CompanyProfile,
+  AgentDataset,
 }
