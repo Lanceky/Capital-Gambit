@@ -35,6 +35,8 @@ interface SourceCard {
   label: string
   detail: string
   status: Status
+  /** Spreadsheet is the one source a user can actually act on from here. */
+  action?: 'choose' | 'disconnect' | 'use-demo'
 }
 
 /** The first two cards reflect which dataset runs are actually reading from. */
@@ -49,6 +51,7 @@ function sourceCards(active: ActiveDataset | null): SourceCard[] {
           `${active.summary.contractRows} contracts from your upload.`
         : 'Upload an .xlsx workbook or CSV export below to analyze your own data instead of the demo ledger.',
       status: uploaded ? 'live' : 'unavailable',
+      action: uploaded ? 'disconnect' : 'choose',
     },
     {
       id: 'fixtures',
@@ -57,6 +60,7 @@ function sourceCards(active: ActiveDataset | null): SourceCard[] {
         ? 'Superseded by your uploaded spreadsheet. Disconnect the upload to return to it.'
         : '624 invoices and 25 vendor contracts across 12 months. Currently driving analysis.',
       status: uploaded ? 'unavailable' : 'fixture',
+      action: uploaded ? 'use-demo' : undefined,
     },
     {
       id: 'plaid',
@@ -258,10 +262,38 @@ export default function ConnectionsPage() {
                   <p className="mt-1.5 flex-1 text-[11px] leading-relaxed text-slate-600">
                     {s.detail}
                   </p>
-                  {s.status === 'unavailable' && (
+                  {s.action === 'choose' && (
+                    <button
+                      onClick={() => inputRef.current?.click()}
+                      disabled={busy}
+                      className="mt-2.5 self-start rounded bg-slate-900 px-2.5 py-1 text-[11px] font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+                    >
+                      Choose file
+                    </button>
+                  )}
+                  {s.action === 'disconnect' && (
+                    <button
+                      onClick={disconnect}
+                      disabled={busy}
+                      className="mt-2.5 self-start rounded border border-slate-300 px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      Disconnect
+                    </button>
+                  )}
+                  {s.action === 'use-demo' && (
+                    <button
+                      onClick={disconnect}
+                      disabled={busy}
+                      className="mt-2.5 self-start rounded border border-slate-300 px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      Use demo data
+                    </button>
+                  )}
+                  {!s.action && s.status === 'unavailable' && (
                     <button
                       disabled
-                      className="mt-2.5 self-start rounded border border-slate-300 px-2.5 py-1 text-[11px] font-medium text-slate-400"
+                      title="Not implemented in this build"
+                      className="mt-2.5 self-start cursor-not-allowed rounded border border-slate-200 px-2.5 py-1 text-[11px] font-medium text-slate-400"
                     >
                       Connect
                     </button>
@@ -308,7 +340,12 @@ export default function ConnectionsPage() {
               accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.json,application/json"
               multiple
               className="hidden"
-              onChange={(e) => void upload(e.target.files)}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => {
+                void upload(e.target.files)
+                // Allow re-selecting the same file after a disconnect.
+                e.target.value = ''
+              }}
             />
           </div>
 
