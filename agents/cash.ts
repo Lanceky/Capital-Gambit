@@ -382,10 +382,19 @@ function earlyPaymentFindings(
     .map((a) => `${a.vendor} (${a.daysEarly}d early, ${formatUsd(a.capital)})`)
     .join(', ')
 
+  // Name the vendors outright when there are few enough to fit; a title reading
+  // "3 vendors settled ahead of terms" is not an actionable finding.
+  const vendorList = assessed.map((a) => a.vendor)
+  const subject =
+    vendorList.length <= 3
+      ? vendorList.join(', ')
+      : `${vendorList.slice(0, 2).join(', ')} and ${vendorList.length - 2} other vendors`
+  const verb = vendorList.length === 1 ? 'is' : 'are'
+
   findings.push({
     id: findingId,
     agentId: AGENT_ID,
-    title: `${assessed.length} vendors settled ahead of terms with no discount captured`,
+    title: `${subject} ${verb} settled ahead of terms with no discount captured`,
     detail:
       `${named}. Settling ahead of contractual terms without a corresponding discount lends the supplier ` +
       `${formatUsd(totalCapital)} at zero interest. At a ${costOfCapitalPct}% cost of capital that carries an ` +
@@ -406,7 +415,7 @@ function earlyPaymentFindings(
   levers.push({
     id: 'lever-early-payment',
     agentId: AGENT_ID,
-    title: `Pay ${assessed.length} vendors at terms rather than early, freeing ${formatUsd(totalCapital)}`,
+    title: `Pay ${subject} at terms rather than early, freeing ${formatUsd(totalCapital)}`,
     description:
       `Hold payment on vendors currently settled ahead of schedule until contractual terms unless a discount ` +
       `beats the ${costOfCapitalPct}% cost of capital on an annualized basis. Releases ${formatUsd(totalCapital)} ` +

@@ -58,6 +58,24 @@ identified and no move can cite more than its lever released.
 Every finding, lever and reasoning step carries `SourceRef` row ids. Clicking any
 figure opens the actual ledger and contract rows behind it.
 
+## Connecting your own spreadsheet
+
+Drop a CSV on the **Connections** page. An accepted file becomes the active
+dataset immediately — every subsequent analysis run and every provenance
+drill-down reads it instead of the bundled fixtures, and the header shows which
+dataset is in use.
+
+- **Ledger export** (required): `kind`, `counterparty`, `amountUsd`, plus
+  `date`, `dueDate`, `paidDate` and `termsDays` where available.
+- **Contract export** (optional): `vendor`, `annualValueUsd`, renewal and notice
+  dates. Without it, renewal levers cannot be identified and the UI says so.
+- **Company profile** (optional, JSON): revenue, COGS, cash balance and cost of
+  capital. Without it these are inferred from ledger activity, and the inferred
+  fields are labelled as such rather than presented as reported figures.
+
+Column naming is tolerant of common spellings, and validation failures name the
+offending row and column. **Disconnect** reverts to the demo ledger.
+
 ## Human approval
 
 Nothing executes. The recommendation is a proposal: amounts are editable, the

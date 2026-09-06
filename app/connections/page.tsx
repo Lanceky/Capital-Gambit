@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 interface UploadSummary {
   ledgerRows: number
@@ -12,51 +12,79 @@ interface UploadSummary {
   vendors: number
 }
 
+interface ActiveDataset {
+  origin: 'upload' | 'fixture' | 'none'
+  label: string
+  savedAt: string | null
+  files: { name: string; kind: string; rows: number }[]
+  derivedFields: string[]
+  company: { name: string; annualRevenueUsd: number; costOfCapitalPct: number }
+  summary: UploadSummary
+}
+
 interface RowError {
   row: number
   column: string
   message: string
 }
 
-const SOURCES = [
-  {
-    id: 'spreadsheet',
-    label: 'Spreadsheet / CSV export',
-    detail: 'Ledger and contract exports from the accounting system.',
-    status: 'live' as const,
-  },
-  {
-    id: 'fixtures',
-    label: 'Meridian Instruments demo ledger',
-    detail: '624 invoices and 25 vendor contracts across 12 months.',
-    status: 'fixture' as const,
-  },
-  {
-    id: 'plaid',
-    label: 'Bank feed (Plaid)',
-    detail:
-      'Not wired up in this build. Cash position is derived from the ledger rather than from live bank balances, so any figure shown here would be inferred, not observed.',
-    status: 'unavailable' as const,
-  },
-  {
-    id: 'documents',
-    label: 'Contract documents',
-    detail: 'Parse renewal terms and notice periods straight from signed PDFs.',
-    status: 'unavailable' as const,
-  },
-  {
-    id: 'expenses',
-    label: 'Expense management',
-    detail: 'Card and reimbursement spend for cost-structure analysis.',
-    status: 'unavailable' as const,
-  },
-  {
-    id: 'crm',
-    label: 'CRM pipeline',
-    detail: 'Weighted pipeline for the revenue and forecast agent.',
-    status: 'unavailable' as const,
-  },
-]
+type Status = 'live' | 'fixture' | 'unavailable'
+
+interface SourceCard {
+  id: string
+  label: string
+  detail: string
+  status: Status
+}
+
+/** The first two cards reflect which dataset runs are actually reading from. */
+function sourceCards(active: ActiveDataset | null): SourceCard[] {
+  const uploaded = active?.origin === 'upload'
+  return [
+    {
+      id: 'spreadsheet',
+      label: 'Spreadsheet / CSV export',
+      detail: uploaded
+        ? `Active. Analysis runs read ${active.summary.ledgerRows} ledger rows and ` +
+          `${active.summary.contractRows} contracts from your upload.`
+        : 'Upload a ledger or contract export below to analyze your own data instead of the demo ledger.',
+      status: uploaded ? 'live' : 'unavailable',
+    },
+    {
+      id: 'fixtures',
+      label: 'Meridian Instruments demo ledger',
+      detail: uploaded
+        ? 'Superseded by your uploaded spreadsheet. Disconnect the upload to return to it.'
+        : '624 invoices and 25 vendor contracts across 12 months. Currently driving analysis.',
+      status: uploaded ? 'unavailable' : 'fixture',
+    },
+    {
+      id: 'plaid',
+      label: 'Bank feed (Plaid)',
+      detail:
+        'Not wired up in this build. Cash position is derived from the ledger rather than from live bank balances, so any figure shown here would be inferred, not observed.',
+      status: 'unavailable',
+    },
+    {
+      id: 'documents',
+      label: 'Contract documents',
+      detail: 'Parse renewal terms and notice periods straight from signed PDFs.',
+      status: 'unavailable',
+    },
+    {
+      id: 'expenses',
+      label: 'Expense management',
+      detail: 'Card and reimbursement spend for cost-structure analysis.',
+      status: 'unavailable',
+    },
+    {
+      id: 'crm',
+      label: 'CRM pipeline',
+      detail: 'Weighted pipeline for the revenue and forecast agent.',
+      status: 'unavailable',
+    },
+  ]
+}
 
 const BADGE: Record<string, { label: string; className: string }> = {
   live: { label: 'Connected', className: 'bg-emerald-100 text-emerald-800' },
@@ -71,7 +99,42 @@ export default function ConnectionsPage() {
   const [rowErrors, setRowErrors] = useState<RowError[]>([])
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [active, setActive] = useState<ActiveDataset | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  const refreshActive = useCallback(async () => {
+    try {
+      const res = await fetch('/api/dataset')
+      setActive(res.ok ? ((await res.json()) as ActiveDataset) : null)
+    } catch {
+      setActive(null)
+    }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/dataset')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body) => {
+        if (!cancelled) setActive(body as ActiveDataset | null)
+      })
+      .catch(() => undefined)
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  async function disconnect() {
+    setBusy(true)
+    try {
+      await fetch('/api/dataset', { method: 'DELETE' })
+      setSummary(null)
+      setAccepted([])
+      await refreshActive()
+    } finally {
+      setBusy(false)
+    }
+  }
 
   async function upload(files: FileList | null) {
     if (!files || files.length === 0) return
@@ -92,6 +155,7 @@ export default function ConnectionsPage() {
       }
       setSummary(body.summary)
       setAccepted(body.accepted ?? [])
+      await refreshActive()
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -119,12 +183,64 @@ export default function ConnectionsPage() {
       </header>
 
       <main className="mx-auto max-w-5xl px-6 py-6">
+        {active && (
+          <section
+            className={`mb-6 rounded-lg border px-5 py-4 ${
+              active.origin === 'upload'
+                ? 'border-emerald-300 bg-emerald-50'
+                : 'border-amber-300 bg-amber-50'
+            }`}
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-600">
+                  Analysis is running against
+                </p>
+                <p className="mt-1 text-sm font-semibold text-slate-900">{active.label}</p>
+                <p className="mt-1 text-[11px] text-slate-600">
+                  {active.summary.ledgerRows} ledger rows ({active.summary.arRows} AR /{' '}
+                  {active.summary.apRows} AP), {active.summary.counterparties} counterparties,{' '}
+                  {active.summary.contractRows} contracts
+                  {active.savedAt
+                    ? ` · connected ${new Date(active.savedAt).toLocaleString()}`
+                    : ''}
+                </p>
+              </div>
+              {active.origin === 'upload' && (
+                <button
+                  onClick={disconnect}
+                  disabled={busy}
+                  className="rounded border border-slate-400 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                >
+                  Disconnect
+                </button>
+              )}
+            </div>
+
+            {active.summary.contractRows === 0 && active.origin === 'upload' && (
+              <p className="mt-3 border-t border-emerald-200 pt-2 text-[11px] text-slate-700">
+                No contract export connected, so renewal levers cannot be identified. Upload a
+                contracts CSV to include them.
+              </p>
+            )}
+
+            {active.derivedFields.length > 0 && (
+              <p className="mt-2 text-[11px] leading-relaxed text-slate-700">
+                <span className="font-semibold">Inferred, not reported:</span>{' '}
+                {active.derivedFields.join(', ')} were estimated from ledger activity because no
+                company profile was uploaded. Upload a company JSON to replace these with your own
+                figures.
+              </p>
+            )}
+          </section>
+        )}
+
         <section className="mb-6">
           <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-600">
             Data sources
           </h2>
           <div className="grid gap-3 sm:grid-cols-2">
-            {SOURCES.map((s) => {
+            {sourceCards(active).map((s) => {
               const badge = BADGE[s.status]
               return (
                 <div
@@ -182,12 +298,14 @@ export default function ConnectionsPage() {
             </p>
             <p className="mx-auto mt-1 max-w-md text-[11px] leading-relaxed text-slate-500">
               A ledger export needs kind, counterparty and amountUsd columns. A contract export
-              needs vendor and annualValueUsd. The file type is detected from its headers.
+              needs vendor and annualValueUsd. A company profile can be supplied as JSON. The type
+              is detected from the contents, and an accepted file immediately becomes the dataset
+              every subsequent analysis run reads from.
             </p>
             <input
               ref={inputRef}
               type="file"
-              accept=".csv,text/csv"
+              accept=".csv,text/csv,.json,application/json"
               multiple
               className="hidden"
               onChange={(e) => void upload(e.target.files)}
@@ -223,7 +341,8 @@ export default function ConnectionsPage() {
           {summary && (
             <div className="mt-3 rounded border border-emerald-300 bg-emerald-50 px-4 py-3">
               <p className="text-xs font-medium text-emerald-900">
-                Accepted {accepted.map((a) => `${a.name} (${a.kind}, ${a.rows} rows)`).join(', ')}
+                Connected {accepted.map((a) => `${a.name} (${a.kind}, ${a.rows} rows)`).join(', ')}.
+              Analysis runs now use this data.
               </p>
               <dl className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <Stat label="Ledger rows" value={summary.ledgerRows} />

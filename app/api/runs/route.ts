@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { DatasetUnavailableError, loadFixtureDataset } from '@/lib/dataset'
+import { DatasetUnavailableError } from '@/lib/dataset'
+import { loadActiveDataset } from '@/lib/activeDataset'
 import { startRunDetached } from '@/lib/orchestrator'
 import { listRuns } from '@/lib/store'
 
@@ -12,12 +13,12 @@ export async function GET() {
 }
 
 /**
- * POST /api/runs — start a run against the fixture dataset and return the id
+ * POST /api/runs — start a run against the active dataset and return the id
  * immediately. The agents continue in the background; poll GET /api/runs/:id.
  */
 export async function POST() {
   try {
-    const dataset = await loadFixtureDataset()
+    const { dataset } = await loadActiveDataset()
     const id = await startRunDetached(dataset)
     return NextResponse.json({ id }, { status: 202 })
   } catch (err) {

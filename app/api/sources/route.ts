@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { DatasetUnavailableError, loadFixtureDataset } from '@/lib/dataset'
+import { DatasetUnavailableError } from '@/lib/dataset'
+import { loadActiveDataset } from '@/lib/activeDataset'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,7 +24,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const dataset = await loadFixtureDataset()
+    const { dataset } = await loadActiveDataset()
     // Cap the response so a lever citing hundreds of rows cannot stall the UI.
     const ledger = dataset.ledger.filter((e) => ids.has(e.id)).slice(0, 500)
     const contracts = dataset.contracts.filter((c) => ids.has(c.id)).slice(0, 500)

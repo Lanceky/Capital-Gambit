@@ -43,6 +43,7 @@ export default function Dashboard() {
   const [starting, setStarting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [drawer, setDrawer] = useState<{ title: string; evidence: SourceRef[] } | null>(null)
+  const [source, setSource] = useState<{ origin: string; label: string } | null>(null)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const stopPolling = useCallback(() => {
@@ -54,6 +55,12 @@ export default function Dashboard() {
 
   // Load the most recent run so a refresh does not lose the demo state.
   useEffect(() => {
+    fetch('/api/dataset')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d) setSource({ origin: d.origin, label: d.label })
+      })
+      .catch(() => undefined)
     fetch('/api/runs')
       .then((r) => r.json())
       .then((body) => {
@@ -116,6 +123,20 @@ export default function Dashboard() {
             <p className="text-[11px] text-slate-500">
               Autonomous Office of the CFO — working capital reallocation
             </p>
+            {source && (
+              <p className="mt-0.5 text-[11px] text-slate-600">
+                <span
+                  className={`mr-1.5 inline-block rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${
+                    source.origin === 'upload'
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : 'bg-amber-100 text-amber-800'
+                  }`}
+                >
+                  {source.origin === 'upload' ? 'Your data' : 'Demo data'}
+                </span>
+                {source.label}
+              </p>
+            )}
           </div>
           <nav className="ml-auto flex items-center gap-3">
             <Link
